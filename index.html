@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#e8590c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ホットクック検索">
+<title>ホットクックレシピ検索</title>
+<style>
+:root{--bg:#fbf7f2;--card:#fff;--ink:#2b2622;--sub:#7a6f66;--line:#eadfd3;--acc:#e8590c;--acc2:#fff0e6;--ok:#2f9e44}
+@media (prefers-color-scheme:dark){:root{--bg:#1c1917;--card:#292524;--ink:#f5efe9;--sub:#a8998c;--line:#3d3631;--acc:#ff8a4c;--acc2:#3a2a20}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+header{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 14px 8px;border-bottom:1px solid var(--line)}
+.row{display:flex;gap:8px}
+input[type=search],input[type=text],select{flex:1;min-width:0;font-size:16px;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+button{font:inherit;cursor:pointer}
+.btn{border:0;border-radius:12px;padding:11px 16px;background:var(--acc);color:#fff;font-weight:700}
+.btn.ghost{background:var(--acc2);color:var(--acc)}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:8px 0 2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:99px;padding:5px 12px;font-size:14px}
+.chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.opts{display:none;gap:8px;margin-top:8px;flex-wrap:wrap}
+.opts.open{display:flex}
+.opts label{font-size:12px;color:var(--sub);display:flex;flex-direction:column;gap:2px;flex:1;min-width:130px}
+main{padding:12px 14px}
+.meta{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 0 10px;color:var(--sub);font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:620px){.grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:900px){.grid{grid-template-columns:repeat(4,1fr)}}
+.card{background:var(--card);border-radius:14px;overflow:hidden;border:1px solid var(--line);position:relative;text-align:left;padding:0;color:inherit}
+.card img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:var(--line)}
+.card .t{padding:8px 10px 10px;font-size:14px;font-weight:600;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rank{position:absolute;left:6px;top:6px;background:var(--acc);color:#fff;font-weight:800;border-radius:8px;min-width:26px;text-align:center;padding:1px 7px;font-size:14px}
+.fav{position:absolute;right:6px;top:6px;width:34px;height:34px;border-radius:50%;border:0;background:rgba(255,255,255,.9);font-size:18px;line-height:34px;padding:0;color:#bbb}
+.fav.on{color:#e03131}
+.empty{text-align:center;color:var(--sub);padding:40px 10px}
+.more{display:block;margin:16px auto;width:100%}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);z-index:6}
+nav button{flex:1;border:0;background:none;color:var(--sub);padding:9px 0 8px;font-size:12px;display:flex;flex-direction:column;align-items:center;gap:1px}
+nav button span{font-size:20px}
+nav button.on{color:var(--acc);font-weight:700}
+.sheet{position:fixed;inset:0;background:var(--bg);z-index:20;overflow:auto;display:none;padding-bottom:90px}
+.sheet.open{display:block}
+.sheet .bar{position:sticky;top:0;background:var(--bg);display:flex;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);align-items:center;z-index:2}
+.sheet .bar .sp{flex:1}
+.sheet img.hero{width:100%;max-height:60vh;object-fit:cover;display:block;background:var(--line)}
+.body{padding:14px;max-width:720px;margin:0 auto}
+h1{font-size:20px;margin:0 0 6px}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 12px}
+.tag{background:var(--acc2);color:var(--acc);border-radius:8px;padding:2px 8px;font-size:13px;font-weight:600}
+h2{font-size:16px;margin:18px 0 6px;border-left:4px solid var(--acc);padding-left:8px}
+.mat{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px dashed var(--line)}
+.mat .g{font-size:12px;color:var(--sub);margin-top:8px}
+.step{display:flex;gap:10px;margin:10px 0}
+.step .n{flex:none;width:26px;height:26px;border-radius:50%;background:var(--acc);color:#fff;font-weight:700;text-align:center;line-height:26px;font-size:14px}
+.step p{margin:0 0 4px}
+.step .menu{background:var(--acc2);color:var(--acc);border-radius:8px;padding:6px 8px;font-size:14px;font-weight:600}
+.step img{max-width:100%;border-radius:10px;margin-top:4px}
+.stepbox{flex:1;min-width:0}
+.share-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:40;display:none;align-items:center;justify-content:center;padding:14px}
+.modal.open{display:flex}
+.modal .box{background:var(--card);border-radius:16px;max-width:520px;width:100%;max-height:92vh;display:flex;flex-direction:column;padding:12px;gap:10px}
+.modal .pv{overflow:auto;flex:1;min-height:120px;text-align:center}
+.modal .pv img{max-width:100%;height:auto;border-radius:8px;-webkit-touch-callout:default;user-select:auto}
+.modal .hint{font-size:12px;color:var(--sub);text-align:center;margin:0}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#333;color:#fff;padding:9px 16px;border-radius:99px;font-size:14px;z-index:60;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.on{opacity:1}
+.spin{text-align:center;color:var(--sub);padding:24px}
+.select-bar{display:flex;gap:6px;align-items:center}
+</style>
+</head>
+<body>
+<header id="hdr">
+  <form class="row" id="sf" autocomplete="off">
+    <input type="search" id="q" placeholder="食材・料理名（例: だいこん ひきにく）" enterkeyhint="search" inputmode="search">
+    <button class="btn" type="submit">検索</button>
+    <button class="btn ghost" type="button" id="optBtn" aria-label="絞り込み">⚙</button>
+  </form>
+  <div class="opts" id="opts">
+    <label>機種<select id="model">
+      <option value="KN-HW24G">KN-HW24G</option>
+      <option value="KN-HW24H">KN-HW24H</option>
+      <option value="KN-HW24K">KN-HW24K</option>
+      <option value="KN-HW16H">KN-HW16H</option>
+      <option value="KN-HW16K">KN-HW16K</option>
+      <option value="">指定なし</option>
+    </select></label>
+    <label>調理時間<select id="cooktime">
+      <option value="">指定なし</option>
+    </select></label>
+    <label>除外ワード<input type="text" id="ign" placeholder="例: 卵"></label>
+  </div>
+  <div class="chips" id="chips"></div>
+</header>
+
+<main id="main"></main>
+
+<nav>
+  <button data-tab="search" class="on"><span>🔍</span>検索</button>
+  <button data-tab="rank"><span>🏆</span>ランキング</button>
+  <button data-tab="fav"><span>♥</span>お気に入り</button>
+</nav>
+
+<section class="sheet" id="sheet"></section>
+
+<div class="modal" id="modal"><div class="box">
+  <div class="pv" id="pv"></div>
+  <p class="hint">画像を長押しでも保存できます</p>
+  <div class="row"><button class="btn" id="mShare" style="flex:1">共有</button><button class="btn ghost" id="mSave" style="flex:1">保存</button><button class="btn ghost" id="mClose">✕</button></div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+const API='https://cocoroplus.jp.sharp/kitchen/recipe/api/';
+const SITE='https://cocoroplus.jp.sharp/kitchen/recipe';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+
+/* ---------- state ---------- */
+const S={tab:'search',q:'',offset:0,total:0,items:[],loading:false,
+  rankType:'view',rank:[],
+  favs:store.get('favs',[]),hist:store.get('hist',[]),
+  model:store.get('model','KN-HW24G'),cooktime:store.get('cooktime',''),ign:''};
+const COOK=[['','指定なし'],['15','15分以内'],['30','15〜30分'],['60','30〜60分'],['unlimited','60分以上']];
+
+/* ---------- api ---------- */
+async function api(path,opt){
+  const r=await fetch(API+path,opt);
+  if(!r.ok) throw new Error(r.status);
+  return r.json();
+}
+const searchApi=(o)=>api('recipe/search',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},
+  body:JSON.stringify({offset:o.offset,limit:20,search:o.q,models:S.model?[S.model]:[],cooktime:S.cooktime,reservation:false,ignore_text:S.ign,purposes:[],categories:[],genres:[]})});
+const codeOf=h=>String(h||'').split('/').pop();
+const modelOf=h=>{const p=String(h||'').split('/');return p.length>=3?p[p.length-2]:''};
+const thumb=u=>u;               // 表示用はそのまま
+const proxied=(u,w)=>'https://wsrv.nl/?url='+encodeURIComponent(u.replace(/^https?:\/\//,''))+'&w='+w+'&h='+Math.round(w*.75)+'&fit=cover&output=jpg&q=80';
+
+/* ---------- utils ---------- */
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('on'),1800)}
+const isFav=c=>S.favs.some(f=>f.code===c);
+function toggleFav(it){
+  const i=S.favs.findIndex(f=>f.code===it.code);
+  if(i>=0)S.favs.splice(i,1);else S.favs.unshift({code:it.code,title:it.title,imageSrc:it.imageSrc,model:it.model});
+  store.set('favs',S.favs);
+}
+function itemFrom(r){return {code:r.code||codeOf(r.href),title:r.title,imageSrc:r.imageSrc,model:r.modelName||modelOf(r.href)||S.model||'KN-HW24G',rank:r.rank}}
+
+/* ---------- list rendering ---------- */
+function cardHtml(it,showRank){
+  return `<div class="card" data-code="${esc(it.code)}" data-model="${esc(it.model)}">
+    <button style="all:unset;display:block;width:100%;cursor:pointer" data-open="1">
+      <img loading="lazy" src="${esc(it.imageSrc)}" alt="">
+      <div class="t">${esc(it.title)}</div>
+    </button>
+    ${showRank&&it.rank?`<div class="rank">${it.rank}</div>`:''}
+    <button class="fav ${isFav(it.code)?'on':''}" data-fav="1" aria-label="お気に入り">♥</button>
+  </div>`;
+}
+function render(){
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===S.tab));
+  $('#chips').style.display=S.tab==='search'||S.tab==='rank'?'flex':'none';
+  $('#sf').style.display=S.tab==='fav'?'none':'flex';
+  if(S.tab!=='search')$('#opts').classList.remove('open');
+  const m=$('#main');
+  if(S.tab==='search'){
+    renderChips(S.hist.map(h=>[h,h]),h=>{$('#q').value=h;doSearch(h)},null,'🕘 ');
+    if(!S.q&&!S.items.length){m.innerHTML=`<div class="empty">食材や料理名を入力して検索<br><small>スペース区切りで AND 検索（例: だいこん ひきにく）</small></div>`;loadPopular();return}
+    if(S.loading&&!S.items.length){m.innerHTML='<div class="spin">検索中…</div>';return}
+    m.innerHTML=`<div class="meta"><span><b>${S.total}</b> 件${S.q?`　「${esc(S.q)}」`:''}</span>
+      <span class="select-bar"><button class="chip" id="imgBtn">🖼 画像で保存・共有</button></span></div>
+      <div class="grid">${S.items.map(i=>cardHtml(i)).join('')}</div>
+      ${S.items.length<S.total?'<button class="btn ghost more" id="more">もっと見る</button>':''}
+      ${S.total===0?'<div class="empty">見つかりませんでした</div>':''}`;
+  }else if(S.tab==='rank'){
+    renderChips([['view','閲覧数'],['cook','調理数'],['soaring','急上昇']],k=>{S.rankType=k;loadRank()},S.rankType);
+    if(S.loading&&!S.rank.length){m.innerHTML='<div class="spin">読み込み中…</div>';return}
+    m.innerHTML=`<div class="meta"><span>ホットクック人気ランキング</span><button class="chip" id="imgBtn">🖼 画像で保存・共有</button></div>
+      <div class="grid">${S.rank.map(i=>cardHtml(i,true)).join('')}</div>`;
+  }else{
+    m.innerHTML=S.favs.length?`<div class="meta"><span><b>${S.favs.length}</b> 件のお気に入り</span><button class="chip" id="imgBtn">🖼 画像で保存・共有</button></div>
+      <div class="grid">${S.favs.map(i=>cardHtml(i)).join('')}</div>
+      <p class="meta">※お気に入りはこの端末のブラウザに保存されます</p>`:
+      '<div class="empty">♥ を押したレシピがここに並びます</div>';
+  }
+}
+function renderChips(list,fn,cur,prefix=''){
+  const c=$('#chips');c.innerHTML='';
+  list.forEach(([k,l])=>{const b=document.createElement('button');b.type='button';b.className='chip'+(k===cur?' on':'');b.textContent=prefix+l;b.onclick=()=>fn(k);c.appendChild(b)});
+}
+async function loadPopular(){
+  try{const k=S.pop||(S.pop=await api('popularKeywords'));
+    $('#main').insertAdjacentHTML('beforeend',`<div class="meta" style="justify-content:center;flex-wrap:wrap;gap:6px"><span style="width:100%;text-align:center">人気のキーワード</span>${k.map(w=>`<button class="chip" data-kw="${esc(w)}">${esc(w)}</button>`).join('')}</div>`)}catch(e){}
+}
+
+/* ---------- actions ---------- */
+async function doSearch(q,more){
+  if(!more){S.q=q.trim();S.offset=0;S.items=[];S.total=0;
+    if(S.q){S.hist=[S.q,...S.hist.filter(h=>h!==S.q)].slice(0,12);store.set('hist',S.hist)}}
+  S.loading=true;if(!more)render();
+  try{
+    const d=await searchApi({q:S.q,offset:S.offset});
+    S.total=d.total||0;S.items=S.items.concat((d.recipes||[]).map(itemFrom));S.offset=S.items.length;
+  }catch(e){toast('検索に失敗しました');}
+  S.loading=false;render();
+}
+async function loadRank(){
+  S.loading=true;S.rank=[];render();
+  try{const d=await api(`home/ranking/${S.rankType}?appliances=hotcook`);
+    S.rank=d.map((r,i)=>({...itemFrom(r),rank:r.rank||i+1,model:S.model||modelOf(r.href)}));
+    S.rank.forEach((r,i)=>r._alt=modelOf(d[i].href));
+  }catch(e){toast('ランキング取得に失敗しました')}
+  S.loading=false;render();
+}
+function setTab(t){S.tab=t;window.scrollTo(0,0);if(t==='rank'&&!S.rank.length)loadRank();else render()}
+
+/* ---------- detail ---------- */
+async function openDetail(code,model,alt){
+  const sh=$('#sheet');sh.classList.add('open');document.body.style.overflow='hidden';
+  sh.innerHTML='<div class="spin">読み込み中…</div>';
+  let d=null;
+  for(const m of [model,alt,'KN-HW24G','KN-HW24K'].filter(Boolean)){
+    try{d=await api(`recipe/${code}/${m}`);model=m;break}catch(e){}
+  }
+  if(!d){sh.innerHTML='<div class="bar"><button class="btn ghost" id="back">← 戻る</button></div><div class="empty">取得できませんでした</div>';return}
+  d._code=code;d._model=model;S.cur=d;
+  const steps=groupSteps(d.methods||[]);
+  S.curSteps=steps;
+  const img=d.imageUrl||`https://healsio.s3.ap-northeast-1.amazonaws.com/recipe-photo/jp/recipe/photo/${code}.jpg`;
+  d._img=img;
+  let lastG=null;
+  const mats=(d.materials||[]).map(m=>{
+    let h='';if(m.group&&m.group!==lastG){h=`<div class="g">${esc(m.group)}</div>`}lastG=m.group;
+    return h+`<div class="mat"><span>${esc(m.name)}</span><span>${esc(m.quantity)}</span></div>`}).join('');
+  sh.innerHTML=`<div class="bar"><button class="btn ghost" id="back">← 戻る</button><span class="sp"></span>
+      <button class="btn ghost" id="dFav">${isFav(code)?'♥':'♡'}</button></div>
+    <img class="hero" src="${esc(img)}" alt="">
+    <div class="body"><h1>${esc(d.name)}</h1>
+      <div class="tags">${[d.cookingTime&&'⏱ '+d.cookingTime,d.menuNum&&'No.'+d.menuNum,d.calorie,d.quantity].filter(Boolean).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>
+      <h2>材料</h2>${mats}
+      ${(d.material_appendices||[]).map(a=>`<p style="font-size:13px;color:var(--sub);margin:6px 0">${esc(a)}</p>`).join('')}
+      <h2>作り方</h2>
+      ${steps.map((s,i)=>`<div class="step"><div class="n">${i+1}</div><div class="stepbox">${s.map(x=>
+        x.img?`<img loading="lazy" src="${esc(x.img)}" alt="">`:
+        x.menu?`<p class="menu">${esc(x.text)}</p>`:`<p>${esc(x.text)}</p>`).join('')}</div></div>`).join('')}
+      <div class="share-actions">
+        <button class="btn" id="dImg">🖼 画像で保存・共有</button>
+        <button class="btn ghost" id="dLink">🔗 リンクを共有</button>
+      </div></div>`;
+  sh.scrollTop=0;
+}
+function groupSteps(ms){
+  const by=new Map();
+  ms.forEach(m=>{
+    const k=m.orderNumber;if(!by.has(k))by.set(k,[]);
+    const t=m.type&&m.type.type||'text';
+    if(t==='image'){const mm=/src='([^']+)'/.exec(m.renderedHtml||'');if(mm)by.get(k).push({img:mm[1]});return}
+    if(!m.text)return;
+    if(t==='text.A')by.get(k).push({menu:true,text:m.text.replace(/#/g,' ')});
+    else by.get(k).push({text:m.text.replace(/#/g,' ')});
+  });
+  return [...by.keys()].sort((a,b)=>a-b).map(k=>by.get(k));
+}
+function closeDetail(){$('#sheet').classList.remove('open');document.body.style.overflow=''}
+function recipeUrl(){const d=S.cur;return `${SITE}/hotcook/${d._model}/${d._code}`}
+
+/* ---------- image generation ---------- */
+function loadImg(u,w){
+  return new Promise(res=>{
+    const im=new Image();im.crossOrigin='anonymous';
+    const t=setTimeout(()=>res(null),9000);
+    im.onload=()=>{clearTimeout(t);res(im)};im.onerror=()=>{clearTimeout(t);res(null)};
+    im.src=proxied(u,w);
+  });
+}
+function wrap(ctx,text,maxW){
+  const lines=[];let cur='';
+  for(const ch of String(text)){
+    if(ch==='\n'){lines.push(cur);cur='';continue}
+    if(ctx.measureText(cur+ch).width>maxW&&cur){lines.push(cur);cur=ch}else cur+=ch;
+  }
+  if(cur)lines.push(cur);return lines;
+}
+const FONT='"Hiragino Sans","Noto Sans JP","Yu Gothic",sans-serif';
+function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
+async function listImage(title,items){
+  items=items.slice(0,40);
+  const W=1080,P=36,G=24,cols=2,cw=(W-P*2-G)/cols,ih=cw*.75,th=96,chh=ih+th;
+  const rows=Math.ceil(items.length/cols),H=170+rows*(chh+G)+70;
+  const imgs=await Promise.all(items.map(i=>loadImg(i.imageSrc,560)));
+  const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+  x.fillStyle='#fbf7f2';x.fillRect(0,0,W,H);
+  x.fillStyle='#e8590c';x.fillRect(0,0,W,130);
+  x.fillStyle='#fff';x.font=`bold 44px ${FONT}`;x.textBaseline='alphabetic';
+  x.fillText(wrap(x,title,W-P*2)[0],P,64);
+  x.font=`26px ${FONT}`;x.fillText(`ホットクック ${S.model||''}　${items.length}件　${new Date().toLocaleDateString('ja-JP')}`,P,106);
+  items.forEach((it,i)=>{
+    const cx=P+(i%cols)*(cw+G),cy=160+Math.floor(i/cols)*(chh+G);
+    x.save();rr(x,cx,cy,cw,chh,18);x.fillStyle='#fff';x.fill();x.clip();
+    if(imgs[i])x.drawImage(imgs[i],cx,cy,cw,ih);else{x.fillStyle='#eadfd3';x.fillRect(cx,cy,cw,ih);x.fillStyle='#a8998c';x.font=`30px ${FONT}`;x.textAlign='center';x.fillText('No Image',cx+cw/2,cy+ih/2);x.textAlign='left'}
+    x.restore();
+    x.fillStyle='#2b2622';x.font=`bold 29px ${FONT}`;
+    wrap(x,it.title,cw-28).slice(0,2).forEach((l,j)=>x.fillText(l,cx+14,cy+ih+38+j*38));
+    if(it.rank){x.fillStyle='#e8590c';rr(x,cx+10,cy+10,64,48,12);x.fill();x.fillStyle='#fff';x.font=`bold 30px ${FONT}`;x.textAlign='center';x.fillText(it.rank,cx+42,cy+44);x.textAlign='left'}
+  });
+  x.fillStyle='#7a6f66';x.font=`22px ${FONT}`;x.fillText('COCORO KITCHEN（シャープ）のレシピ',P,H-28);
+  return c;
+}
+async function detailImage(){
+  const d=S.cur,steps=S.curSteps,W=1080,P=48,TW=W-P*2;
+  const hero=await loadImg(d._img,1000);
+  const m=document.createElement('canvas').getContext('2d');
+  // measure
+  m.font=`bold 46px ${FONT}`;const tl=wrap(m,d.name,TW);
+  m.font=`30px ${FONT}`;
+  const mats=(d.materials||[]).map(a=>({g:a.group,n:a.name,q:a.quantity}));
+  const stepLines=steps.map(s=>s.filter(p=>p.text).map(p=>wrap(m,p.text,TW-70)).flat());
+  const heroH=hero?Math.round(W*hero.height/hero.width):0;
+  let H=heroH+40+tl.length*60+60+60+mats.length*48+(mats.filter((a,i)=>a.g&&a.g!==(mats[i-1]||{}).g).length*40)+80;
+  stepLines.forEach(l=>{H+=Math.max(l.length,1)*42+24});
+  H+=90;
+  const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+  x.fillStyle='#fff';x.fillRect(0,0,W,H);
+  let y=0;if(hero){x.drawImage(hero,0,0,W,heroH);y=heroH}
+  y+=70;x.fillStyle='#2b2622';x.font=`bold 46px ${FONT}`;tl.forEach(l=>{x.fillText(l,P,y);y+=60});
+  x.font=`28px ${FONT}`;x.fillStyle='#e8590c';
+  x.fillText([d.cookingTime&&'⏱ '+d.cookingTime,d.menuNum&&'メニューNo.'+d.menuNum,d.quantity].filter(Boolean).join('　'),P,y);y+=50;
+  const head=t=>{x.fillStyle='#e8590c';x.fillRect(P,y-30,8,38);x.fillStyle='#2b2622';x.font=`bold 34px ${FONT}`;x.fillText(t,P+22,y);y+=48};
+  head('材料');
+  let lg=null;
+  mats.forEach(a=>{
+    if(a.g&&a.g!==lg){x.fillStyle='#7a6f66';x.font=`24px ${FONT}`;x.fillText('◆ '+a.g,P,y);y+=40}lg=a.g;
+    x.fillStyle='#2b2622';x.font=`30px ${FONT}`;x.fillText(a.n,P,y);x.textAlign='right';x.fillText(a.q||'',W-P,y);x.textAlign='left';
+    x.strokeStyle='#eadfd3';x.setLineDash([6,6]);x.beginPath();x.moveTo(P,y+14);x.lineTo(W-P,y+14);x.stroke();x.setLineDash([]);y+=48;
+  });
+  y+=34;head('作り方');
+  stepLines.forEach((ls,i)=>{
+    x.fillStyle='#e8590c';x.beginPath();x.arc(P+20,y-10,20,0,7);x.fill();
+    x.fillStyle='#fff';x.font=`bold 26px ${FONT}`;x.textAlign='center';x.fillText(i+1,P+20,y-1);x.textAlign='left';
+    x.fillStyle='#2b2622';x.font=`30px ${FONT}`;
+    (ls.length?ls:['']).forEach(l=>{x.fillText(l,P+62,y);y+=42});y+=24;
+  });
+  x.fillStyle='#7a6f66';x.font=`22px ${FONT}`;x.fillText('COCORO KITCHEN（シャープ）',P,H-34);
+  return c;
+}
+
+/* ---------- share / save ---------- */
+let curBlob=null,curName='recipe.png';
+async function showImage(canvasP,name){
+  toast('画像を作成中…');
+  try{
+    const c=await canvasP;
+    const blob=await new Promise(r=>c.toBlob(r,'image/png'));
+    curBlob=blob;curName=name;
+    const url=URL.createObjectURL(blob);
+    $('#pv').innerHTML=`<img src="${url}" alt="">`;$('#modal').classList.add('open');
+  }catch(e){console.error(e);toast('画像の作成に失敗しました')}
+}
+async function shareBlob(){
+  if(!curBlob)return;
+  const f=new File([curBlob],curName,{type:'image/png'});
+  if(navigator.canShare&&navigator.canShare({files:[f]})){
+    try{await navigator.share({files:[f],title:curName.replace('.png','')});return}catch(e){if(e.name==='AbortError')return}
+  }
+  saveBlob();toast('共有できないため保存しました');
+}
+function saveBlob(){
+  if(!curBlob)return;
+  const a=document.createElement('a');a.href=URL.createObjectURL(curBlob);a.download=curName;document.body.appendChild(a);a.click();a.remove();
+}
+function curList(){
+  if(S.tab==='search')return [S.q?`「${S.q}」の検索結果`:'レシピ検索',S.items];
+  if(S.tab==='rank')return [`ホットクックランキング（${({view:'閲覧数',cook:'調理数',soaring:'急上昇'})[S.rankType]}）`,S.rank];
+  return ['お気に入りレシピ',S.favs];
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click',e=>{
+  const t=e.target;
+  const fav=t.closest('[data-fav]');
+  if(fav){const card=fav.closest('.card');const all=[...S.items,...S.rank,...S.favs];
+    const it=all.find(i=>i.code===card.dataset.code);if(it){toggleFav(it);fav.classList.toggle('on',isFav(it.code));if(S.tab==='fav')render()}return}
+  const op=t.closest('[data-open]');
+  if(op){const card=op.closest('.card');const it=[...S.items,...S.rank,...S.favs].find(i=>i.code===card.dataset.code);openDetail(card.dataset.code,card.dataset.model,it&&it._alt);return}
+  const kw=t.closest('[data-kw]');if(kw){$('#q').value=kw.dataset.kw;doSearch(kw.dataset.kw);return}
+  const id=t.closest('[id]')?.id;
+  if(t.id==='more')doSearch(S.q,true);
+  else if(t.id==='back')closeDetail();
+  else if(t.id==='dFav'){const d=S.cur;toggleFav({code:d._code,title:d.name,imageSrc:`https://healsio.s3.ap-northeast-1.amazonaws.com/recipe-photo/jp/recipe/photo/${d._code}.jpg`,model:d._model});t.textContent=isFav(d._code)?'♥':'♡';render()}
+  else if(t.id==='dImg')showImage(detailImage(),`${S.cur.name}.png`);
+  else if(t.id==='dLink'){const u=recipeUrl();if(navigator.share)navigator.share({title:S.cur.name,url:u}).catch(()=>{});else navigator.clipboard?.writeText(u).then(()=>toast('リンクをコピーしました'))}
+  else if(t.id==='imgBtn'){const [ti,items]=curList();if(!items.length)return toast('対象がありません');showImage(listImage(ti,items),`${ti}.png`)}
+  else if(t.id==='mShare')shareBlob();
+  else if(t.id==='mSave')saveBlob();
+  else if(t.id==='mClose'||t.id==='modal')$('#modal').classList.remove('open');
+});
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
+$('#sf').addEventListener('submit',e=>{e.preventDefault();$('#q').blur();doSearch($('#q').value)});
+$('#optBtn').onclick=()=>$('#opts').classList.toggle('open');
+$('#model').onchange=e=>{S.model=e.target.value;store.set('model',S.model);if(S.q)doSearch(S.q)};
+$('#cooktime').innerHTML=COOK.map(([v,l])=>`<option value="${v}">${l}</option>`).join('');
+$('#cooktime').onchange=e=>{S.cooktime=e.target.value;store.set('cooktime',S.cooktime);if(S.q)doSearch(S.q)};
+$('#ign').onchange=e=>{S.ign=e.target.value.trim();if(S.q)doSearch(S.q)};
+window.addEventListener('popstate',()=>closeDetail());
+$('#model').value=S.model;$('#cooktime').value=S.cooktime;
+// URLパラメータ ?q=だいこん ひきにく で直接検索
+const qp=new URLSearchParams(location.search).get('q');
+if(qp){$('#q').value=qp;doSearch(qp)}else render();
+</script>
+</body>
+</html>
